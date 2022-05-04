@@ -38,7 +38,7 @@ def read_data(file_name):
     countries, indicators = get_indicators_countries()
     df_wb = df_wb[df_wb['Country Code'].isin(countries) & df_wb['Indicator Code'].isin(indicators)]
     # preprocess data
-    df_wb.dropna(axis=1, inplace=True)
+    # df_wb.dropna(axis=1, inplace=True)
     # reset index and drop the old ones
     df_wb.reset_index(drop=True, inplace=True)
     # drop the two columns to make selection a simple process in transposed data
@@ -69,14 +69,17 @@ def generate_graph(df, title, x_label, y_label, legend):
     plt.show()
 
 
-def calculate_correlation(x, y):
+def calculate_correlation(x, y, title):
     """
     calculate the pearsonr corr between to variables
+    :param title:
     :param x: numpy array
     :param y:numpy array
-    :returns: the pearson correlationsip
     """
-    return pearsonr(x, y)
+    r, p = pearsonr(x, y)
+    print(title)
+    print("correlation coefficient r:", r)
+    print("probability p:", p)
 
 
 # Press the green button in the gutter to run the script.
@@ -101,4 +104,23 @@ if __name__ == '__main__':
         df_wb_transposed[[("PAK", "EG.USE.PCAP.KG.OE"), ("GBR", "EG.USE.PCAP.KG.OE"), ("USA", "EG.USE.PCAP.KG.OE")]],
         "Energy use in PAK, GBR and USA", "Energy use", "kg of oil per capita",
         ["PAK", "GBR", "USA"])
-
+    #   find correlation between variables
+    df_wb_transposed.dropna(inplace=True)
+    electric = df_wb_transposed[[("PAK", "EG.ELC.ACCS.ZS")]].to_numpy().flatten()
+    co2_emission = df_wb_transposed[[("PAK", "EN.ATM.CO2E.KT")]].to_numpy().flatten()
+    # find corr between access to electricity and CO2 emission
+    calculate_correlation(electric, co2_emission, "electricity vs CO2 emission")
+    # Electric power consumption and CO2 emission
+    electric_usage = df_wb_transposed[[("PAK", "EG.USE.ELEC.KH.PC")]].to_numpy().flatten()
+    # find corr between access to Electric power consumption and CO2 emission
+    calculate_correlation(electric_usage, co2_emission, "Electric power consumption vs CO2 emission")
+    # Energy use vs CO2 emission
+    oil_energy = df_wb_transposed[[("PAK", "EG.USE.PCAP.KG.OE")]].to_numpy().flatten()
+    # find corr between access to Energy use and CO2 emission
+    calculate_correlation(oil_energy, co2_emission, "Energy use vs CO2 emission")
+    # plot the corr graph
+    plt.figure()
+    plt.plot(electric_usage, co2_emission, "x")
+    plt.xlabel("electric_usage")
+    plt.ylabel("$C0_2$")
+    plt.show()
